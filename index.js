@@ -21,11 +21,9 @@ const products = [
 
 app.post("/create-checkout-session", async (req, res) => {
   try {
-    const { items } = req.body; // receive all items
+    const { items } = req.body;
 
-    if (!items || !items.length) {
-      return res.status(400).json({ error: "No items provided" });
-    }
+    if (!items || !items.length) return res.status(400).json({ error: "No items provided" });
 
     const line_items = items.map(item => {
       const product = products.find(p => p.id === item.id);
@@ -48,11 +46,11 @@ app.post("/create-checkout-session", async (req, res) => {
     });
 
     res.json({ url: session.url });
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

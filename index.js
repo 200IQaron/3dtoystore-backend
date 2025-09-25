@@ -1,54 +1,56 @@
-import express from "express";
-import Stripe from "stripe";
-import cors from "cors";
-
+const express = require("express");
 const app = express();
+const cors = require("cors");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 app.use(cors());
 app.use(express.json());
 
-// ✅ make sure Railway has STRIPE_SECRET_KEY set correctly
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const shippingRates = {
+  FI: 250,
+  SE: 350,
+  DE: 400,
+  DEFAULT: 500
+};
 
-// ✅ Products mapping
-const storeItems = new Map([
-  [1, { priceInCents: 150, name: "Key Holder" }],
-  [2, { priceInCents: 350, name: "Pen Holder" }],
-  [3, { priceInCents: 350, name: "Desk Organizer" }],
-  [4, { priceInCents: 250, name: "Phone Stand" }],
-  [5, { priceInCents: 150, name: "Cable Clips" }],
-  [6, { priceInCents: 450, name: "Clip to Desk Head Stand" }],
-  [7, { priceInCents: 200, name: "Pocket Copter" }],
-  [8, { priceInCents: 150, name: "BMW Keychain" }],
-  [9, { priceInCents: 350, name: "SD & Micro SD Holder" }],
-  [10, { priceInCents: 500, name: "Lehtisaari Keychain" }]
-]);
-
-// ✅ Checkout session route
 app.post("/create-checkout-session", async (req, res) => {
+  const { items, shippingCountry } = req.body;
+
+  const line_items = items.map(item => ({
+    price_data: {
+      currency: "eur",
+      product_data: { name: item.name },
+      unit_amount: Math.round(item.price * 100),
+    },
+    quantity: 1,
+  }));
+
+  const shippingFee = shippingRates[shippingCountry] || shippingRates.DEFAULT;
+
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
+      line_items,
       mode: "payment",
-      line_items: req.body.items.map(item => {
-        const storeItem = storeItems.get(item.id);
-        return {
-          price_data: {
-            currency: "eur",
-            product_data: { name: storeItem.name },
-            unit_amount: storeItem.priceInCents,
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: shippingFee, currency: "eur" },
+            display_name: `Shipping (${(shippingFee/100).toFixed(2)}€)`,
           },
-          quantity: 1,
-        };
-      }),
-      success_url: "https://your-frontend-url.com/success",
-      cancel_url: "https://your-frontend-url.com/cancel",
+        },
+      ],
+      success_url: "https://YOUR_FRONTEND_URL_HERE/success.html",
+      cancel_url: "https://YOUR_FRONTEND_URL_HERE",
     });
+
     res.json({ url: session.url });
-  } catch (e) {
-    console.error(e.message);
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("Stripe error:", err);
+    res.status(500).json({ error: "Checkout session creation failed" });
   }
 });
 
-const port = process.env.PORT || 8080;
-app.listen(port, () => console.log(`✅ Server running on port ${port}`));
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

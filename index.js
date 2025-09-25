@@ -3,12 +3,12 @@ import Stripe from "stripe";
 import cors from "cors";
 
 const app = express();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // Your Stripe secret key
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 app.use(cors());
 app.use(express.json());
 
-// Products catalog
+// Product catalog with prices in cents
 const products = [
   { id: 1, name: "Key Holder", price: 150 },
   { id: 2, name: "Pen Holder", price: 350 },
@@ -19,10 +19,13 @@ const products = [
   { id: 7, name: "Pocket Copter", price: 200 }
 ];
 
-// Create Stripe Checkout Session
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const { items } = req.body;
+
+    if (!items || !items.length) {
+      return res.status(400).json({ error: "No items provided" });
+    }
 
     const line_items = items.map(item => {
       const product = products.find(p => p.id === item.id);
@@ -51,8 +54,5 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-// Start server
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -6,10 +6,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Use Stripe secret key from Railway environment variables
+// Stripe key from Environment Variable
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Endpoint to create a multi-item checkout session
+// Endpoint to create multi-item checkout session
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
@@ -29,9 +29,11 @@ app.post("/create-checkout-session", async (req, res) => {
 
     res.json({ url: session.url });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: e.message });
   }
 });
 
-// Start the server
-app.listen(3000, () => console.log("Server running on port 3000"));
+// Use Railway dynamic port
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

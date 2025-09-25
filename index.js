@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 app.use(cors());
 app.use(express.json());
 
-// Product catalog with prices in cents
+// Product catalog
 const products = [
   { id: 1, name: "Key Holder", price: 150 },
   { id: 2, name: "Pen Holder", price: 350 },
@@ -21,7 +21,7 @@ const products = [
 
 app.post("/create-checkout-session", async (req, res) => {
   try {
-    const { items } = req.body;
+    const { items } = req.body; // receive all items
 
     if (!items || !items.length) {
       return res.status(400).json({ error: "No items provided" });

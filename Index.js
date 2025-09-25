@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Stripe key from Environment Variable
+// Stripe secret key from Environment Variable
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Endpoint to create multi-item checkout session

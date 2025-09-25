@@ -22,15 +22,24 @@ app.post("/create-checkout-session", async (req, res) => {
       quantity: item.quantity,
     }));
 
-    // Free shipping
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       line_items,
       success_url: `${req.headers.origin}/success.html`,
       cancel_url: `${req.headers.origin}/index.html`,
+      // Enable address collection
+      shipping_address_collection: {
+        allowed_countries: ["FI","SE","NO","DK","DE","FR","ES","IT","GB"]
+      },
       shipping_options: [
-        { shipping_rate_data: { type: "fixed_amount", fixed_amount: { amount: 0, currency: "eur" }, display_name: "Free Shipping" } }
+        {
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: 0, currency: "eur" },
+            display_name: "Free Shipping"
+          }
+        }
       ],
     });
 
